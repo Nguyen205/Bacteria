@@ -1,0 +1,107 @@
+"""
+Functions for abstracting dataflow from main.py
+"""
+
+from src.util import print_verbose, print_normal
+import src.calc
+import src.image_mod
+import src.io_manager
+import src.util
+from src.image_data import ImageData
+
+def write_sizes(sizes : tuple[float, float]):
+    assert type(sizes) == tuple
+    assert len(sizes) == 2
+    assert type(sizes[0]) == float
+    assert type(sizes[1]) == float
+    ImageData.set_height(sizes[0])
+    ImageData.set_width(sizes[1])
+
+def write_cutoff(cutoff : bool, side_cutoff : bool):
+    assert type(cutoff) == bool
+    assert type(side_cutoff) == bool
+    ImageData.set_cutoff(cutoff)
+    ImageData.set_side_cutoff(side_cutoff)
+
+def write_bw(data : list[ImageData]):
+    print_verbose("Calculating thresholds and writing b&w")
+    failed_threshold = False
+    for image in data:
+        hist, bin_edges = src.calc.image_histogram(image)
+        hist[0] = 0 # Ignore 0-values for thresholding
+        level = src.calc.triangle_method(hist, len(bin_edges) - 1)
+        level += 2 / 256 # magic numbers, hooray!  Used for offset, based on ImageJ survey apparently
+        src.image_mod.apply_triangle(image, level)
+        if not image.bw.any():
+            print_normal(f"Image {image._name} failed to threshold")
+            failed_threshold = True
+            continue
+        src.io_manager.write_image(image.bw, f"bw_{image.name}.tif")
+    if failed_threshold:
+        print_normal(f"At least one image failed to threshold, exitting")
+        exit()
+
+def read_bw(data : list[ImageData]):
+    print_verbose("Reading b&w")
+    for image in data:
+        if image.bw is not None:
+            continue
+        filename = f"bw_{image.name}.tif"
+        print_verbose(f"Attempting to reuse {filename}")
+        image.bw = src.io_manager.read_image(filename, True)
+
+def write_bwc(data : list[ImageData]):
+    print_verbose("Writing b&w with cut")
+    for image in data:
+        src.image_mod.cut(image)
+        src.io_manager.write_image(image.bwc, f"bwc_{image.name}.tif")
+
+def read_bwc(data : list[ImageData]):
+    print_verbose("Reading b&w with cut")
+    for image in data:
+        if image.bwc is not None:
+            continue
+        filename = f"bwc_{image.name}.tif"
+        print_verbose(f"Attempting to reuse {filename}")
+        image.bwc = src.io_manager.read_image(filename)
+
+def calculate_outliers(data : list[ImageData], mode : int):
+    print_verbose("Determining outliers")
+    if mode in (1, 2):
+        print_verbose(f"In mode {mode}, recalulating outliers")
+    # TODO: _height fix
+    out_area = 360
+    out_cutoff = round(out_area/(ImageData._height*1000/data[0].gsm.shape[0]*
+        ImageData._width*1000/data[0].gsm.shape[1]))
+    for image in data:
+        if image.outl is not None:
+            raise Exception(f"Unknown error, {image} was pre-assigned outlier")
+            
+        filename  = f"outl_{image.name}.tif"
+        filename2 = f"outl2_{image.name}.tif"
+        filename3 = f"outl3_{image.name}.tif"
+        src.image_mod.calc_outliers(image, out_cutoff)
+        src.io_manager.write_image(image.outl, filename)
+        src.image_mod.show_outliers(image)
+        src.io_manager.write_image(image.outl2, filename2)
+        if ImageData._cutoff:
+            src.image_mod.show_flattened_outliers(image)
+            src.io_manager.write_image(image.outl3, filename3)
+
+def oct_analysis(data : list[ImageData]):
+    print_verbose("Performing OCT Analysis")
+    to_write = [['Filename', 'Mean BF thickness (µm)', 'R_a (µm)']]
+    to_write.append([])
+    for image in data:
+        image.data = src.calc.build_calculated(image)
+        to_write.append([f"bwc_{image.name}.tif", image.data.mem_length,
+            image.data.ra])
+        
+    avgs = [0.] * (len(to_write[2]) - 1)
+    for x in to_write[2:]:
+        for i in range(1, len(to_write[2])):
+            avgs[i-1] += x[i]
+    avgs = [avg / (len(to_write)-2) for avg in avgs]
+    to_write.append(['Averages'] + avgs)
+    to_write.insert(-1, [])
+    src.io_manager.write_csv(to_write, "result.csv")
