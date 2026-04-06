@@ -1,0 +1,93 @@
+{
+    "command" :[
+        {
+            "name" : "verbose",
+            "type" : "bool"
+        },
+        {
+            "name" : "quiet",
+            "type" : "bool"
+        },
+        {
+            "name" : "overwrite",
+            "type" : "bool"
+        },
+        {
+            "name" : "exit_error",
+            "type" : "bool"
+        }
+    ],
+    "basics" : [
+        {
+            "name" : "height",
+            "type" : "float",
+            "min" : 0
+        },
+        {
+            "name" : "width",
+            "type" : "float",
+            "min" : 0
+        },
+        {
+            "name" : "use_cutoff",
+            "type" : "bool"
+        },
+        {
+            "name" : "cutoff_sides",
+            "type" : "bool"
+        }
+    ],
+    "locations" : [
+        {
+            "name" : "gs_folder",
+            "type" : "string",
+            "path" : true,
+            "nullable" : false,
+            "check_exists" : true
+        },
+        {
+            "name" : "gsm_folder",
+            "type" : "string",
+            "path" : true,
+            "nullable" : false,
+            "check_exists" : true
+        },
+        {
+            "name" : "bw_folder",
+            "type" : "string",
+            "path" : true,
+            "nullable" : true,
+            "check_exists" : true
+        },
+        {
+            "name" : "bwc_folder",
+            "type" : "string",
+            "path" : true,
+            "nullable" : true,
+            "check_exists" : true
+        },
+        {
+            "name" : "csv_results",
+            "type" : "string",
+            "path" : true,
+            "check_exists" : false,
+            "nullable" : false,
+            "extension" : "csv"
+        },
+        {
+            "name" : "log_results",
+            "type" : "string",
+            "path" : true,
+            "check_exists" : false,
+            "nullable" : false,
+            "extension" : "csv"
+        },
+        {
+            "name" : "image_results",
+            "type" : "string",
+            "path" : true,
+            "nullable" : false,
+            "check_exists" : false
+        }
+    ]
+}

@@ -1,0 +1,21 @@
+# Example options file, should probably not be modified directly
+# Copy-paste this file to make a new option file, and modify that
+# Every option can be skipped, though the user will be prompted each time
+
+# Basic options that will be modified often
+# OCTA will by default make a note if any basic option is provided when run
+[basics]
+height = 0.73125 # in mm
+width = 2.88125  # in mm
+use_cutoff = false   # whether to use the black line cutoff indicating biofilm-membrane interface
+cutoff_sides = false  # whether to cutoff the empty sides of the image
+
+[locations]
+gs_folder = "example"  # where to read gs files
+gsm_folder = "example/membrane_marked"  # where to read gsm files
+bw_folder = false  # where to read bw files (nullable)
+bwc_folder = false  # where to read bwc files (nullable)
+
+csv_results = "results/example/data.csv"  # where to write data results
+log_results = "results/example/log.csv"  # where to write logging information
+image_results = "results/example/images"  # where to write image results
